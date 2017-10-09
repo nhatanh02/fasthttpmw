@@ -27,7 +27,9 @@ func main() {
 		}
 	}
 	router := routerwithmw.New()
-	router.GET("/*a", requestHandler)
+	router.Use(routerwithmw.BodyLimit("1B"))
+	router.POST("/*a", requestHandler)
+	//router.GET("/*a", requestHandler)
 	//router.GET("/:a", requestHandler)
 	// Start the server with default settings.
 	// Create Server instance for adjusting server settings.

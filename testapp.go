@@ -27,6 +27,7 @@ func main() {
 		}
 	}
 	router := routerwithmw.New()
+	router.Use(routerwithmw.Recover())
 	router.Use(routerwithmw.BodyLimit("1B"))
 	router.Use(routerwithmw.BasicAuth(func(username string, password string, c *fasthttp.RequestCtx) (bool, error) {
 		if username == "joe" && password == "secret" {

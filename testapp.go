@@ -35,6 +35,7 @@ func main() {
 		}
 		return false, nil
 	}))
+	router.Use(routerwithmw.Secure())
 	router.POST("/*a", requestHandler)
 	//router.GET("/*a", requestHandler)
 	//router.GET("/:a", requestHandler)

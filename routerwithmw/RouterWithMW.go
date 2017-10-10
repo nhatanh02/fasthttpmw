@@ -49,11 +49,10 @@ func (r *RouterWithMW) Handler(ctx *fasthttp.RequestCtx) {
 				h = r.middleware[i](h)
 			}
 			h(ctx)
-			return
 		} else {
 			r.Router.Handler(ctx)
-			return
 		}
+		return
 	}
 
 	// Premiddleware

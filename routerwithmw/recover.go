@@ -57,12 +57,15 @@ func RecoverWithConfig(config RecoverConfig) MW {
 	}
 
 	return func(next http.RequestHandler) http.RequestHandler {
-		return func(c *http.RequestCtx) (err error) {
+		return func(c *http.RequestCtx) {
 			if config.Skipper(c) {
-				return next(c)
+				next(c)
+				return
+
 			}
 
 			defer func() {
+				var err error
 				if r := recover(); r != nil {
 					switch r := r.(type) {
 					case error:
@@ -75,10 +78,11 @@ func RecoverWithConfig(config RecoverConfig) MW {
 					if !config.DisablePrintStack {
 						c.Logger().Printf("[%s] %s %s\n", color.Red("PANIC RECOVER"), err, stack[:length])
 					}
-					c.Error(err)
+					c.Error(http.StatusMessage(http.StatusInternalServerError)+fmt.Sprintf(": %s", err), http.StatusInternalServerError)
 				}
 			}()
-			return next(c)
+			next(c)
+			return
 		}
 	}
 }

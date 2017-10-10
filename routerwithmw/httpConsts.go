@@ -1,6 +1,7 @@
 package routerwithmw
 
 import "fmt"
+import http "github.com/valyala/fasthttp"
 
 // Auxillary consts
 // MIME types

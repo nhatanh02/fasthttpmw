@@ -3,6 +3,7 @@ package middlewares
 import (
 	"encoding/base64"
 	//	"fmt"
+	. "fasthttp-mw/routerwithmw"
 	http "github.com/valyala/fasthttp"
 	"strconv"
 )

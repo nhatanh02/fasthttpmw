@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	. "fasthttp-mw/routerwithmw"
 	"fmt"
 	http "github.com/valyala/fasthttp"
 )

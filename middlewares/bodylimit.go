@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	//fastrouter "github.com/buaazp/fasthttprouter"
+	. "fasthttp-mw/routerwithmw"
 	"github.com/labstack/gommon/bytes"
 	"github.com/valyala/fasthttp"
 )

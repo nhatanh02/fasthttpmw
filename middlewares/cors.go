@@ -1,10 +1,10 @@
 package middlewares
 
 import (
+	. "fasthttp-mw/routerwithmw"
+	http "github.com/valyala/fasthttp"
 	"strconv"
 	"strings"
-
-	http "github.com/valyala/fasthttp"
 )
 
 type (

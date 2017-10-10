@@ -1,11 +1,11 @@
 package middlewares
 
 import (
+	. "fasthttp-mw/routerwithmw"
 	"fmt"
-	"runtime"
-
 	"github.com/labstack/gommon/color"
 	http "github.com/valyala/fasthttp"
+	"runtime"
 )
 
 type (

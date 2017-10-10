@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	//fastrouter "github.com/buaazp/fasthttprouter"
+	"fasthttp-mw/middlewares"
 	"fasthttp-mw/routerwithmw"
 	"github.com/valyala/fasthttp"
 	"log"
@@ -27,15 +28,17 @@ func main() {
 		}
 	}
 	router := routerwithmw.New()
-	router.Use(routerwithmw.Recover())
-	router.Use(routerwithmw.BodyLimit("1B"))
-	router.Use(routerwithmw.BasicAuth(func(username string, password string, c *fasthttp.RequestCtx) (bool, error) {
+	router.Use(middlewares.Recover())
+	router.Use(middlewares.BodyLimit("1B"))
+	router.Use(middlewares.BasicAuth(func(username string, password string, c *fasthttp.RequestCtx) (bool, error) {
 		if username == "joe" && password == "secret" {
 			return true, nil
 		}
 		return false, nil
 	}))
-	router.Use(routerwithmw.Secure())
+	router.Use(middlewares.Secure())
+	router.Use(middlewares.JWT(""))
+	router.Use(middlewares.CORS())
 	router.POST("/*a", requestHandler)
 	//router.GET("/*a", requestHandler)
 	//router.GET("/:a", requestHandler)

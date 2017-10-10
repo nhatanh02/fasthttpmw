@@ -2,12 +2,12 @@ package routerwithmw
 
 import (
 	fastrouter "github.com/buaazp/fasthttprouter"
-	"github.com/valyala/fasthttp"
+	http "github.com/valyala/fasthttp"
 	//"log"
 	"fmt"
 )
 
-type MW (func(fasthttp.RequestHandler) fasthttp.RequestHandler)
+type MW (func(http.RequestHandler) http.RequestHandler)
 
 type RouterWithMW struct {
 	*fastrouter.Router
@@ -17,10 +17,10 @@ type RouterWithMW struct {
 
 // Skipper defines a function to skip middleware. Returning true skips processing
 // the middleware.
-type Skipper func(c *fasthttp.RequestCtx) bool
+type Skipper func(c *http.RequestCtx) bool
 
 // DefaultSkipper returns false which processes the middleware.
-func DefaultSkipper(*fasthttp.RequestCtx) bool {
+func DefaultSkipper(*http.RequestCtx) bool {
 	return false
 }
 
@@ -36,14 +36,14 @@ func New() *RouterWithMW {
 	return &RouterWithMW{Router: fastrouter.New(), premiddleware: []MW{}, middleware: []MW{}}
 }
 
-func (r *RouterWithMW) Handler(ctx *fasthttp.RequestCtx) {
+func (r *RouterWithMW) Handler(ctx *http.RequestCtx) {
 	path := string(ctx.Path())
 	method := string(ctx.Method())
 
 	//Middleware
 	//handler = foldr apply routedHandler r.middleware
 	//		where routedHandler = r.Lookup(method,path,ctx)
-	handler := func(c *fasthttp.RequestCtx) {
+	handler := func(c *http.RequestCtx) {
 		if h, _ := r.Lookup(method, path, ctx); h != nil {
 			for i := len(r.middleware) - 1; i >= 0; i-- {
 				h = r.middleware[i](h)
@@ -138,3 +138,26 @@ const (
 	HeaderContentSecurityPolicy   = "Content-Security-Policy"
 	HeaderXCSRFToken              = "X-CSRF-Token"
 )
+
+//HTTPError struct
+
+type HTTPError struct {
+	Code    int
+	Message interface{}
+	Inner   error // Stores the error returned by an external dependency
+}
+
+//HTTPError's Error interface implementation
+
+func NewHTTPError(code int, message ...interface{}) *HTTPError {
+	he := &HTTPError{Code: code, Message: http.StatusMessage(code)}
+	if len(message) > 0 {
+		he.Message = message[0]
+	}
+	return he
+}
+
+// Error makes it compatible with `error` interface.
+func (he *HTTPError) Error() string {
+	return fmt.Sprintf("code=%d, message=%v", he.Code, he.Message)
+}

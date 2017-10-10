@@ -62,7 +62,7 @@ func BodyLimitWithConfig(config BodyLimitConfig) MW {
 
 	limit, err := bytes.Parse(config.Limit)
 	if err != nil {
-		panic(fmt.Errorf("echo: invalid body-limit=%s", config.Limit))
+		panic(fmt.Errorf("fasthttprouter: invalid body-limit=%s", config.Limit))
 	}
 	config.limit = limit
 	fmt.Println("Making new handler with body limit = %d", config.limit)

@@ -1,4 +1,4 @@
-package routerwithmw
+package middlewares
 
 import (
 	"strconv"

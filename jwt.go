@@ -1,7 +1,6 @@
-package middlewares
+package fasthttpmw
 
 import (
-	"fasthttp-mw/routerwithmw" //"net/http"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/valyala/fasthttp"
@@ -13,7 +12,7 @@ type (
 	// JWTConfig defines the config for JWT middleware.
 	JWTConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper routerwithmw.Skipper
+		Skipper Skipper
 
 		// Signing key to validate token.
 		// Required.
@@ -57,17 +56,17 @@ const (
 
 // Errors
 var (
-	ErrJWTMissing = routerwithmw.NewHTTPError(fasthttp.StatusBadRequest, "Missing or malformed jwt")
-	ErrJWTInvalid = routerwithmw.NewHTTPError(fasthttp.StatusUnauthorized, "Invalid or expired jwt")
+	ErrJWTMissing = NewHTTPError(fasthttp.StatusBadRequest, "Missing or malformed jwt")
+	ErrJWTInvalid = NewHTTPError(fasthttp.StatusUnauthorized, "Invalid or expired jwt")
 )
 
 var (
 	// DefaultJWTConfig is the default JWT auth middleware config.
 	DefaultJWTConfig = JWTConfig{
-		Skipper:       routerwithmw.DefaultSkipper,
+		Skipper:       DefaultSkipper,
 		SigningMethod: AlgorithmHS256,
 		ContextKey:    "user",
-		TokenLookup:   "header:" + routerwithmw.HeaderAuthorization,
+		TokenLookup:   "header:" + HeaderAuthorization,
 		AuthScheme:    "Bearer",
 		Claims:        jwt.MapClaims{},
 	}
@@ -81,7 +80,7 @@ var (
 //
 // See: https://jwt.io/introduction
 // See `JWTConfig.TokenLookup`
-func JWT(key interface{}) routerwithmw.MW {
+func JWT(key interface{}) MW {
 	c := DefaultJWTConfig
 	c.SigningKey = key
 	return JWTWithConfig(c)
@@ -89,7 +88,7 @@ func JWT(key interface{}) routerwithmw.MW {
 
 // JWTWithConfig returns a JWT auth middleware with config.
 // See: `JWT()`.
-func JWTWithConfig(config JWTConfig) routerwithmw.MW {
+func JWTWithConfig(config JWTConfig) MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultJWTConfig.Skipper
@@ -140,7 +139,7 @@ func JWTWithConfig(config JWTConfig) routerwithmw.MW {
 			auth, err := extractor(c)
 			if err != nil {
 
-				c.Error(fmt.Sprintf("%s", err.(*routerwithmw.HTTPError).Message), err.(*routerwithmw.HTTPError).Code)
+				c.Error(fmt.Sprintf("%s", err.(*HTTPError).Message), err.(*HTTPError).Code)
 				return
 			}
 			token := new(jwt.Token)

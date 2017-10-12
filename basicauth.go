@@ -1,9 +1,8 @@
-package middlewares
+package fasthttpmw
 
 import (
 	"encoding/base64"
 	//	"fmt"
-	"fasthttp-mw/routerwithmw"
 	"github.com/valyala/fasthttp"
 	"strconv"
 )
@@ -12,7 +11,7 @@ type (
 	// BasicAuthConfig defines the config for BasicAuth middleware.
 	BasicAuthConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper routerwithmw.Skipper
+		Skipper Skipper
 
 		// Validator is a function to validate BasicAuth credentials.
 		// Required.
@@ -35,7 +34,7 @@ const (
 var (
 	// DefaultBasicAuthConfig is the default BasicAuth middleware config.
 	DefaultBasicAuthConfig = BasicAuthConfig{
-		Skipper: routerwithmw.DefaultSkipper,
+		Skipper: DefaultSkipper,
 		Realm:   defaultRealm,
 	}
 )
@@ -44,7 +43,7 @@ var (
 //
 // For valid credentials it calls the next handler.
 // For missing or invalid credentials, it sends "401 - Unauthorized" response.
-func BasicAuth(fn BasicAuthValidator) routerwithmw.MW {
+func BasicAuth(fn BasicAuthValidator) MW {
 	c := DefaultBasicAuthConfig
 	c.Validator = fn
 	return BasicAuthWithConfig(c)
@@ -52,7 +51,7 @@ func BasicAuth(fn BasicAuthValidator) routerwithmw.MW {
 
 // BasicAuthWithConfig returns an BasicAuth middleware with config.
 // See `BasicAuth()`.
-func BasicAuthWithConfig(config BasicAuthConfig) routerwithmw.MW {
+func BasicAuthWithConfig(config BasicAuthConfig) MW {
 	// Defaults
 	if config.Validator == nil {
 		panic("echo: basic-auth middleware requires a validator function")
@@ -71,7 +70,7 @@ func BasicAuthWithConfig(config BasicAuthConfig) routerwithmw.MW {
 				return
 			}
 
-			auth := string(c.Request.Header.Peek(routerwithmw.HeaderAuthorization))
+			auth := string(c.Request.Header.Peek(HeaderAuthorization))
 			l := len(basic)
 			if len(auth) > l+1 && auth[:l] == basic {
 				b, err := base64.StdEncoding.DecodeString(auth[l+1:])
@@ -107,7 +106,7 @@ func BasicAuthWithConfig(config BasicAuthConfig) routerwithmw.MW {
 			}
 
 			// Need to return `401` for browsers to pop-up login box.
-			c.Response.Header.Set(routerwithmw.HeaderWWWAuthenticate, basic+" realm="+realm)
+			c.Response.Header.Set(HeaderWWWAuthenticate, basic+" realm="+realm)
 			c.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
 			return
 

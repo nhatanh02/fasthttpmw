@@ -1,4 +1,4 @@
-package routerwithmw
+package fasthttpmw
 
 import (
 	"github.com/buaazp/fasthttprouter"

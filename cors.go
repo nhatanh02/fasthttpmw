@@ -1,7 +1,6 @@
-package middlewares
+package fasthttpmw
 
 import (
-	"fasthttp-mw/routerwithmw"
 	"github.com/valyala/fasthttp"
 	"strconv"
 	"strings"
@@ -11,7 +10,7 @@ type (
 	// CORSConfig defines the config for CORS middleware.
 	CORSConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper routerwithmw.Skipper
+		Skipper Skipper
 
 		// AllowOrigin defines a list of origins that may access the resource.
 		// Optional. Default value []string{"*"}.
@@ -49,7 +48,7 @@ type (
 var (
 	// DefaultCORSConfig is the default CORS middleware config.
 	DefaultCORSConfig = CORSConfig{
-		Skipper:      routerwithmw.DefaultSkipper,
+		Skipper:      DefaultSkipper,
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"},
 	}
@@ -57,13 +56,13 @@ var (
 
 // CORS returns a Cross-Origin Resource Sharing (CORS) middleware.
 // See: https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS
-func CORS() routerwithmw.MW {
+func CORS() MW {
 	return CORSWithConfig(DefaultCORSConfig)
 }
 
 // CORSWithConfig returns a CORS middleware with config.
 // See: `CORS()`.
-func CORSWithConfig(config CORSConfig) routerwithmw.MW {
+func CORSWithConfig(config CORSConfig) MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultCORSConfig.Skipper
@@ -89,7 +88,7 @@ func CORSWithConfig(config CORSConfig) routerwithmw.MW {
 
 			req := c.Request
 			res := c.Response
-			origin := req.Header.Peek(routerwithmw.HeaderOrigin)
+			origin := req.Header.Peek(HeaderOrigin)
 			allowOrigin := ""
 
 			// Check allowed origins
@@ -102,37 +101,37 @@ func CORSWithConfig(config CORSConfig) routerwithmw.MW {
 
 			// Simple request
 			if string(req.Header.Method()) != "OPTIONS" {
-				res.Header.Add(routerwithmw.HeaderVary, routerwithmw.HeaderOrigin)
-				res.Header.Set(routerwithmw.HeaderAccessControlAllowOrigin, allowOrigin)
+				res.Header.Add(HeaderVary, HeaderOrigin)
+				res.Header.Set(HeaderAccessControlAllowOrigin, allowOrigin)
 				if config.AllowCredentials {
-					res.Header.Set(routerwithmw.HeaderAccessControlAllowCredentials, "true")
+					res.Header.Set(HeaderAccessControlAllowCredentials, "true")
 				}
 				if exposeHeaders != "" {
-					res.Header.Set(routerwithmw.HeaderAccessControlExposeHeaders, exposeHeaders)
+					res.Header.Set(HeaderAccessControlExposeHeaders, exposeHeaders)
 				}
 				next(c)
 				return
 			}
 
 			// Preflight request
-			res.Header.Add(routerwithmw.HeaderVary, routerwithmw.HeaderOrigin)
-			res.Header.Add(routerwithmw.HeaderVary, routerwithmw.HeaderAccessControlRequestMethod)
-			res.Header.Add(routerwithmw.HeaderVary, routerwithmw.HeaderAccessControlRequestHeaders)
-			res.Header.Set(routerwithmw.HeaderAccessControlAllowOrigin, allowOrigin)
-			res.Header.Set(routerwithmw.HeaderAccessControlAllowMethods, allowMethods)
+			res.Header.Add(HeaderVary, HeaderOrigin)
+			res.Header.Add(HeaderVary, HeaderAccessControlRequestMethod)
+			res.Header.Add(HeaderVary, HeaderAccessControlRequestHeaders)
+			res.Header.Set(HeaderAccessControlAllowOrigin, allowOrigin)
+			res.Header.Set(HeaderAccessControlAllowMethods, allowMethods)
 			if config.AllowCredentials {
-				res.Header.Set(routerwithmw.HeaderAccessControlAllowCredentials, "true")
+				res.Header.Set(HeaderAccessControlAllowCredentials, "true")
 			}
 			if allowHeaders != "" {
-				res.Header.Set(routerwithmw.HeaderAccessControlAllowHeaders, allowHeaders)
+				res.Header.Set(HeaderAccessControlAllowHeaders, allowHeaders)
 			} else {
-				h := string(req.Header.Peek(routerwithmw.HeaderAccessControlRequestHeaders))
+				h := string(req.Header.Peek(HeaderAccessControlRequestHeaders))
 				if h != "" {
-					res.Header.Set(routerwithmw.HeaderAccessControlAllowHeaders, h)
+					res.Header.Set(HeaderAccessControlAllowHeaders, h)
 				}
 			}
 			if config.MaxAge > 0 {
-				res.Header.Set(routerwithmw.HeaderAccessControlMaxAge, maxAge)
+				res.Header.Set(HeaderAccessControlMaxAge, maxAge)
 			}
 			c.SetStatusCode(fasthttp.StatusNoContent)
 			return

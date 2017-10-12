@@ -1,7 +1,9 @@
-package routerwithmw
+package fasthttpmw
 
-import "fmt"
-import http "github.com/valyala/fasthttp"
+import (
+	"fmt"
+	"github.com/valyala/fasthttp"
+)
 
 // Auxillary consts
 // MIME types
@@ -88,7 +90,7 @@ type HTTPError struct {
 //HTTPError's Error interface implementation
 
 func NewHTTPError(code int, message ...interface{}) *HTTPError {
-	he := &HTTPError{Code: code, Message: http.StatusMessage(code)}
+	he := &HTTPError{Code: code, Message: fasthttp.StatusMessage(code)}
 	if len(message) > 0 {
 		he.Message = message[0]
 	}

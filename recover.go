@@ -1,7 +1,6 @@
-package middlewares
+package fasthttpmw
 
 import (
-	"fasthttp-mw/routerwithmw"
 	"fmt"
 	"github.com/labstack/gommon/color"
 	"github.com/valyala/fasthttp"
@@ -12,7 +11,7 @@ type (
 	// RecoverConfig defines the config for Recover middleware.
 	RecoverConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper routerwithmw.Skipper
+		Skipper Skipper
 
 		// Size of the stack to be printed.
 		// Optional. Default value 4KB.
@@ -32,7 +31,7 @@ type (
 var (
 	// DefaultRecoverConfig is the default Recover middleware config.
 	DefaultRecoverConfig = RecoverConfig{
-		Skipper:           routerwithmw.DefaultSkipper,
+		Skipper:           DefaultSkipper,
 		StackSize:         4 << 10, // 4 KB
 		DisableStackAll:   false,
 		DisablePrintStack: false,
@@ -41,13 +40,13 @@ var (
 
 // Recover returns a middleware which recovers from panics anywhere in the chain
 // and handles the control to the centralized HTTPErrorHandler.
-func Recover() routerwithmw.MW {
+func Recover() MW {
 	return RecoverWithConfig(DefaultRecoverConfig)
 }
 
 // RecoverWithConfig returns a Recover middleware with config.
 // See: `Recover()`.
-func RecoverWithConfig(config RecoverConfig) routerwithmw.MW {
+func RecoverWithConfig(config RecoverConfig) MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultRecoverConfig.Skipper

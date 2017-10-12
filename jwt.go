@@ -46,7 +46,7 @@ type (
 		keyFunc jwt.Keyfunc
 	}
 
-	jwtExtractor func(*fasthttp.RequestCtx) (string, error)
+	jwtExtractor = func(*fasthttp.RequestCtx) (string, error)
 )
 
 // Algorithms

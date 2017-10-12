@@ -23,7 +23,7 @@ type (
 	}
 
 	// BasicAuthValidator defines a function to validate BasicAuth credentials.
-	BasicAuthValidator func(string, string, *fasthttp.RequestCtx) (bool, error)
+	BasicAuthValidator = func(string, string, *fasthttp.RequestCtx) (bool, error)
 )
 
 const (

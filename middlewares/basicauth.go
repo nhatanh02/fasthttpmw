@@ -3,8 +3,8 @@ package middlewares
 import (
 	"encoding/base64"
 	//	"fmt"
-	. "fasthttp-mw/routerwithmw"
-	http "github.com/valyala/fasthttp"
+	"fasthttp-mw/routerwithmw"
+	"github.com/valyala/fasthttp"
 	"strconv"
 )
 
@@ -12,7 +12,7 @@ type (
 	// BasicAuthConfig defines the config for BasicAuth middleware.
 	BasicAuthConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+		Skipper routerwithmw.Skipper
 
 		// Validator is a function to validate BasicAuth credentials.
 		// Required.
@@ -24,7 +24,7 @@ type (
 	}
 
 	// BasicAuthValidator defines a function to validate BasicAuth credentials.
-	BasicAuthValidator func(string, string, *http.RequestCtx) (bool, error)
+	BasicAuthValidator func(string, string, *fasthttp.RequestCtx) (bool, error)
 )
 
 const (
@@ -35,7 +35,7 @@ const (
 var (
 	// DefaultBasicAuthConfig is the default BasicAuth middleware config.
 	DefaultBasicAuthConfig = BasicAuthConfig{
-		Skipper: DefaultSkipper,
+		Skipper: routerwithmw.DefaultSkipper,
 		Realm:   defaultRealm,
 	}
 )
@@ -44,7 +44,7 @@ var (
 //
 // For valid credentials it calls the next handler.
 // For missing or invalid credentials, it sends "401 - Unauthorized" response.
-func BasicAuth(fn BasicAuthValidator) MW {
+func BasicAuth(fn BasicAuthValidator) routerwithmw.MW {
 	c := DefaultBasicAuthConfig
 	c.Validator = fn
 	return BasicAuthWithConfig(c)
@@ -52,7 +52,7 @@ func BasicAuth(fn BasicAuthValidator) MW {
 
 // BasicAuthWithConfig returns an BasicAuth middleware with config.
 // See `BasicAuth()`.
-func BasicAuthWithConfig(config BasicAuthConfig) MW {
+func BasicAuthWithConfig(config BasicAuthConfig) routerwithmw.MW {
 	// Defaults
 	if config.Validator == nil {
 		panic("echo: basic-auth middleware requires a validator function")
@@ -64,21 +64,21 @@ func BasicAuthWithConfig(config BasicAuthConfig) MW {
 		config.Realm = defaultRealm
 	}
 
-	return func(next http.RequestHandler) http.RequestHandler {
-		return func(c *http.RequestCtx) {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(c *fasthttp.RequestCtx) {
 			if config.Skipper(c) {
 				next(c)
 				return
 			}
 
-			auth := string(c.Request.Header.Peek(HeaderAuthorization))
+			auth := string(c.Request.Header.Peek(routerwithmw.HeaderAuthorization))
 			l := len(basic)
 			if len(auth) > l+1 && auth[:l] == basic {
 				b, err := base64.StdEncoding.DecodeString(auth[l+1:])
 				if err != nil {
 					//panic(fmt.Errorf("fasthttprouter: invalid Authorization=%s", auth))
 
-					c.Error(http.StatusMessage(http.StatusUnauthorized), http.StatusUnauthorized)
+					c.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
 					return
 				}
 				cred := string(b)
@@ -89,7 +89,7 @@ func BasicAuthWithConfig(config BasicAuthConfig) MW {
 						if err != nil {
 							//panic(fmt.Errorf("fasthttprouter: unable to validate: err=%v", err))
 
-							c.Error(http.StatusMessage(http.StatusUnauthorized), http.StatusUnauthorized)
+							c.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
 							return
 						} else if valid {
 							next(c)
@@ -107,8 +107,8 @@ func BasicAuthWithConfig(config BasicAuthConfig) MW {
 			}
 
 			// Need to return `401` for browsers to pop-up login box.
-			c.Response.Header.Set(HeaderWWWAuthenticate, basic+" realm="+realm)
-			c.Error(http.StatusMessage(http.StatusUnauthorized), http.StatusUnauthorized)
+			c.Response.Header.Set(routerwithmw.HeaderWWWAuthenticate, basic+" realm="+realm)
+			c.Error(fasthttp.StatusMessage(fasthttp.StatusUnauthorized), fasthttp.StatusUnauthorized)
 			return
 
 		}

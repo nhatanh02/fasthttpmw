@@ -2,16 +2,16 @@ package middlewares
 
 import (
 	"bytes"
-	. "fasthttp-mw/routerwithmw"
+	"fasthttp-mw/routerwithmw"
 	"fmt"
-	http "github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp"
 )
 
 type (
 	// SecureConfig defines the config for Secure middleware.
 	SecureConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+		Skipper routerwithmw.Skipper
 
 		// XSSProtection provides protection against cross-site scripting attack (XSS)
 		// by setting the `X-XSS-Protection` header.
@@ -60,7 +60,7 @@ type (
 var (
 	// DefaultSecureConfig is the default Secure middleware config.
 	DefaultSecureConfig = SecureConfig{
-		Skipper:            DefaultSkipper,
+		Skipper:            routerwithmw.DefaultSkipper,
 		XSSProtection:      "1; mode=block",
 		ContentTypeNosniff: "nosniff",
 		XFrameOptions:      "SAMEORIGIN",
@@ -71,20 +71,20 @@ var (
 // Secure middleware provides protection against cross-site scripting (XSS) attack,
 // content type sniffing, clickjacking, insecure connection and other code injection
 // attacks.
-func Secure() MW {
+func Secure() routerwithmw.MW {
 	return SecureWithConfig(DefaultSecureConfig)
 }
 
 // SecureWithConfig returns a Secure middleware with config.
 // See: `Secure()`.
-func SecureWithConfig(config SecureConfig) MW {
+func SecureWithConfig(config SecureConfig) routerwithmw.MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultSecureConfig.Skipper
 	}
 
-	return func(next http.RequestHandler) http.RequestHandler {
-		return func(c *http.RequestCtx) {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(c *fasthttp.RequestCtx) {
 			if config.Skipper(c) {
 				next(c)
 				return
@@ -94,23 +94,23 @@ func SecureWithConfig(config SecureConfig) MW {
 			res := c.Response
 
 			if config.XSSProtection != "" {
-				res.Header.Set(HeaderXXSSProtection, config.XSSProtection)
+				res.Header.Set(routerwithmw.HeaderXXSSProtection, config.XSSProtection)
 			}
 			if config.ContentTypeNosniff != "" {
-				res.Header.Set(HeaderXContentTypeOptions, config.ContentTypeNosniff)
+				res.Header.Set(routerwithmw.HeaderXContentTypeOptions, config.ContentTypeNosniff)
 			}
 			if config.XFrameOptions != "" {
-				res.Header.Set(HeaderXFrameOptions, config.XFrameOptions)
+				res.Header.Set(routerwithmw.HeaderXFrameOptions, config.XFrameOptions)
 			}
-			if (c.IsTLS() || bytes.Compare(req.Header.Peek(HeaderXForwardedProto), []byte("https")) == 0) && config.HSTSMaxAge != 0 {
+			if (c.IsTLS() || bytes.Compare(req.Header.Peek(routerwithmw.HeaderXForwardedProto), []byte("https")) == 0) && config.HSTSMaxAge != 0 {
 				subdomains := ""
 				if !config.HSTSExcludeSubdomains {
 					subdomains = "; includeSubdomains"
 				}
-				res.Header.Set(HeaderStrictTransportSecurity, fmt.Sprintf("max-age=%d%s", config.HSTSMaxAge, subdomains))
+				res.Header.Set(routerwithmw.HeaderStrictTransportSecurity, fmt.Sprintf("max-age=%d%s", config.HSTSMaxAge, subdomains))
 			}
 			if config.ContentSecurityPolicy != "" {
-				res.Header.Set(HeaderContentSecurityPolicy, config.ContentSecurityPolicy)
+				res.Header.Set(routerwithmw.HeaderContentSecurityPolicy, config.ContentSecurityPolicy)
 			}
 			next(c)
 			return

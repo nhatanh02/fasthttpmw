@@ -1,10 +1,10 @@
 package middlewares
 
 import (
-	. "fasthttp-mw/routerwithmw"
+	"fasthttp-mw/routerwithmw"
 	"fmt"
 	"github.com/labstack/gommon/color"
-	http "github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp"
 	"runtime"
 )
 
@@ -12,7 +12,7 @@ type (
 	// RecoverConfig defines the config for Recover middleware.
 	RecoverConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+		Skipper routerwithmw.Skipper
 
 		// Size of the stack to be printed.
 		// Optional. Default value 4KB.
@@ -32,7 +32,7 @@ type (
 var (
 	// DefaultRecoverConfig is the default Recover middleware config.
 	DefaultRecoverConfig = RecoverConfig{
-		Skipper:           DefaultSkipper,
+		Skipper:           routerwithmw.DefaultSkipper,
 		StackSize:         4 << 10, // 4 KB
 		DisableStackAll:   false,
 		DisablePrintStack: false,
@@ -41,13 +41,13 @@ var (
 
 // Recover returns a middleware which recovers from panics anywhere in the chain
 // and handles the control to the centralized HTTPErrorHandler.
-func Recover() MW {
+func Recover() routerwithmw.MW {
 	return RecoverWithConfig(DefaultRecoverConfig)
 }
 
 // RecoverWithConfig returns a Recover middleware with config.
 // See: `Recover()`.
-func RecoverWithConfig(config RecoverConfig) MW {
+func RecoverWithConfig(config RecoverConfig) routerwithmw.MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultRecoverConfig.Skipper
@@ -56,8 +56,8 @@ func RecoverWithConfig(config RecoverConfig) MW {
 		config.StackSize = DefaultRecoverConfig.StackSize
 	}
 
-	return func(next http.RequestHandler) http.RequestHandler {
-		return func(c *http.RequestCtx) {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(c *fasthttp.RequestCtx) {
 			if config.Skipper(c) {
 				next(c)
 				return
@@ -78,7 +78,7 @@ func RecoverWithConfig(config RecoverConfig) MW {
 					if !config.DisablePrintStack {
 						c.Logger().Printf("[%s] %s %s\n", color.Red("PANIC RECOVER"), err, stack[:length])
 					}
-					c.Error(http.StatusMessage(http.StatusInternalServerError)+fmt.Sprintf(": %s", err), http.StatusInternalServerError)
+					c.Error(fasthttp.StatusMessage(fasthttp.StatusInternalServerError)+fmt.Sprintf(": %s", err), fasthttp.StatusInternalServerError)
 				}
 			}()
 			next(c)

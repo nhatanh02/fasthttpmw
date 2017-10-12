@@ -1,11 +1,10 @@
 package middlewares
 
 import (
-	"fasthttp-mw/routerwithmw"
-	. "fasthttp-mw/routerwithmw" //"net/http"
+	"fasthttp-mw/routerwithmw" //"net/http"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	http "github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp"
 	"reflect"
 	"strings"
 )
@@ -14,7 +13,7 @@ type (
 	// JWTConfig defines the config for JWT middleware.
 	JWTConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+		Skipper routerwithmw.Skipper
 
 		// Signing key to validate token.
 		// Required.
@@ -48,7 +47,7 @@ type (
 		keyFunc jwt.Keyfunc
 	}
 
-	jwtExtractor func(*http.RequestCtx) (string, error)
+	jwtExtractor func(*fasthttp.RequestCtx) (string, error)
 )
 
 // Algorithms
@@ -58,17 +57,17 @@ const (
 
 // Errors
 var (
-	ErrJWTMissing = routerwithmw.NewHTTPError(http.StatusBadRequest, "Missing or malformed jwt")
-	ErrJWTInvalid = routerwithmw.NewHTTPError(http.StatusUnauthorized, "Invalid or expired jwt")
+	ErrJWTMissing = routerwithmw.NewHTTPError(fasthttp.StatusBadRequest, "Missing or malformed jwt")
+	ErrJWTInvalid = routerwithmw.NewHTTPError(fasthttp.StatusUnauthorized, "Invalid or expired jwt")
 )
 
 var (
 	// DefaultJWTConfig is the default JWT auth middleware config.
 	DefaultJWTConfig = JWTConfig{
-		Skipper:       DefaultSkipper,
+		Skipper:       routerwithmw.DefaultSkipper,
 		SigningMethod: AlgorithmHS256,
 		ContextKey:    "user",
-		TokenLookup:   "header:" + HeaderAuthorization,
+		TokenLookup:   "header:" + routerwithmw.HeaderAuthorization,
 		AuthScheme:    "Bearer",
 		Claims:        jwt.MapClaims{},
 	}
@@ -82,7 +81,7 @@ var (
 //
 // See: https://jwt.io/introduction
 // See `JWTConfig.TokenLookup`
-func JWT(key interface{}) MW {
+func JWT(key interface{}) routerwithmw.MW {
 	c := DefaultJWTConfig
 	c.SigningKey = key
 	return JWTWithConfig(c)
@@ -90,7 +89,7 @@ func JWT(key interface{}) MW {
 
 // JWTWithConfig returns a JWT auth middleware with config.
 // See: `JWT()`.
-func JWTWithConfig(config JWTConfig) MW {
+func JWTWithConfig(config JWTConfig) routerwithmw.MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultJWTConfig.Skipper
@@ -131,8 +130,8 @@ func JWTWithConfig(config JWTConfig) MW {
 		extractor = jwtFromCookie(parts[1])
 	}
 
-	return func(next http.RequestHandler) http.RequestHandler {
-		return func(c *http.RequestCtx) {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(c *fasthttp.RequestCtx) {
 			if config.Skipper(c) {
 				next(c)
 				return
@@ -141,7 +140,7 @@ func JWTWithConfig(config JWTConfig) MW {
 			auth, err := extractor(c)
 			if err != nil {
 
-				c.Error(fmt.Sprintf("%s", err.(*HTTPError).Message), err.(*HTTPError).Code)
+				c.Error(fmt.Sprintf("%s", err.(*routerwithmw.HTTPError).Message), err.(*routerwithmw.HTTPError).Code)
 				return
 			}
 			token := new(jwt.Token)
@@ -169,7 +168,7 @@ func JWTWithConfig(config JWTConfig) MW {
 
 // jwtFromHeader returns a `jwtExtractor` that extracts token from the request header.
 func jwtFromHeader(header string, authScheme string) jwtExtractor {
-	return func(c *http.RequestCtx) (string, error) {
+	return func(c *fasthttp.RequestCtx) (string, error) {
 		auth := string(c.Request.Header.Peek(header))
 		l := len(authScheme)
 		if len(auth) > l+1 && auth[:l] == authScheme {
@@ -181,7 +180,7 @@ func jwtFromHeader(header string, authScheme string) jwtExtractor {
 
 // jwtFromQuery returns a `jwtExtractor` that extracts token from the query string.
 func jwtFromQuery(param string) jwtExtractor {
-	return func(c *http.RequestCtx) (string, error) {
+	return func(c *fasthttp.RequestCtx) (string, error) {
 		token := string(c.QueryArgs().Peek(param))
 		if token == "" {
 			return "", ErrJWTMissing
@@ -192,7 +191,7 @@ func jwtFromQuery(param string) jwtExtractor {
 
 // jwtFromCookie returns a `jwtExtractor` that extracts token from the named cookie.
 func jwtFromCookie(name string) jwtExtractor {
-	return func(c *http.RequestCtx) (string, error) {
+	return func(c *fasthttp.RequestCtx) (string, error) {
 		cookie := string(c.Request.Header.Cookie(name))
 		if cookie == "" {
 			return "", ErrJWTMissing

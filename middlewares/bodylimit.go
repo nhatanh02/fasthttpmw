@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	//fastrouter "github.com/buaazp/fasthttprouter"
-	. "fasthttp-mw/routerwithmw"
+	"fasthttp-mw/routerwithmw"
 	"github.com/labstack/gommon/bytes"
 	"github.com/valyala/fasthttp"
 )
@@ -15,7 +15,7 @@ type (
 	// BodyLimitConfig defines the config for BodyLimit middleware.
 	BodyLimitConfig struct {
 		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+		Skipper routerwithmw.Skipper
 
 		// Maximum allowed size for a request body, it can be specified
 		// as `4x` or `4xB`, where x is one of the multiple from K, M, G, T or P.
@@ -34,7 +34,7 @@ type (
 var (
 	// DefaultBodyLimitConfig is the default BodyLimit middleware config.
 	DefaultBodyLimitConfig = BodyLimitConfig{
-		Skipper: DefaultSkipper,
+		Skipper: routerwithmw.DefaultSkipper,
 	}
 )
 
@@ -46,7 +46,7 @@ var (
 // header and actual content read, which makes it super secure.
 // Limit can be specified as `4x` or `4xB`, where x is one of the multiple from K, M,
 // G, T or P.
-func BodyLimit(limit string) MW {
+func BodyLimit(limit string) routerwithmw.MW {
 	c := DefaultBodyLimitConfig
 	c.Limit = limit
 	fmt.Println("Calling BodyLimitWithConfig..")
@@ -55,7 +55,7 @@ func BodyLimit(limit string) MW {
 
 // BodyLimitWithConfig returns a BodyLimit middleware with config.
 // See: `BodyLimit()`.
-func BodyLimitWithConfig(config BodyLimitConfig) MW {
+func BodyLimitWithConfig(config BodyLimitConfig) routerwithmw.MW {
 	// Defaults
 	if config.Skipper == nil {
 		config.Skipper = DefaultBodyLimitConfig.Skipper

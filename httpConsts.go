@@ -1,6 +1,7 @@
 package fasthttpmw
 
 import (
+	"errors"
 	"fmt"
 	"github.com/valyala/fasthttp"
 )
@@ -101,3 +102,16 @@ func NewHTTPError(code int, message ...interface{}) *HTTPError {
 func (he *HTTPError) Error() string {
 	return fmt.Sprintf("code=%d, message=%v", he.Code, he.Message)
 }
+
+var (
+	ErrUnsupportedMediaType        = NewHTTPError(fasthttp.StatusUnsupportedMediaType)
+	ErrNotFound                    = NewHTTPError(fasthttp.StatusNotFound)
+	ErrUnauthorized                = NewHTTPError(fasthttp.StatusUnauthorized)
+	ErrForbidden                   = NewHTTPError(fasthttp.StatusForbidden)
+	ErrMethodNotAllowed            = NewHTTPError(fasthttp.StatusMethodNotAllowed)
+	ErrStatusRequestEntityTooLarge = NewHTTPError(fasthttp.StatusRequestEntityTooLarge)
+	ErrValidatorNotRegistered      = errors.New("Validator not registered")
+	ErrRendererNotRegistered       = errors.New("Renderer not registered")
+	ErrInvalidRedirectCode         = errors.New("Invalid redirect status code")
+	ErrCookieNotFound              = errors.New("Cookie not found")
+)

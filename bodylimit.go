@@ -2,6 +2,7 @@ package fasthttpmw
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -73,7 +74,7 @@ func BodyLimitWithConfig(config BodyLimitConfig) MW {
 				return
 			}
 
-			req := c.Request
+			req := &c.Request
 
 			// Based on content length
 			if len := int64(req.Header.ContentLength()); len > config.limit {
@@ -82,17 +83,36 @@ func BodyLimitWithConfig(config BodyLimitConfig) MW {
 				return
 			}
 
-			//TODO: adapting this logic, from for http.Request to
-			//fasthttp.Request, or fasthttp.RequestCtx
 			// Based on content read
-			//	pool := limitedReaderPool(config)
-			//	r := pool.Get().(*limitedReader)
-			//	r.Reset(&req, c)
-			//	defer pool.Put(r)
-			//	req.SetBody(r)
-
-			next(c)
-			return
+			// How it works:
+			// (1) Get a limitedReader instance from the pool. This pool is shared
+			// among all request handlers wrapped by the same mw. This saves lots of
+			// circles for allocating/deallocating potentially large blocks of memories
+			// to hold the (potentially large) request's body
+			// (2) Assign the limitedReader's reader and context fields with the current
+			// Request.Body (an io.ReaderCloser in net/http) and echo.Context (rather pointless)
+			// (3) After all computation and handling stuffs done, re-deposit the memory block
+			// into the pool
+			// (4) Assigned the limitedReader to the Request's Body ReaderCloser. This is where
+			// the actual work is done, since limitedReader also implements ReaderCloser but
+			// with a catch: its Read method wraps around the original Body's Read method to
+			// supply read length checking semantics.
+			//  		r := pool.Get().(*limitedReader)
+			//			r.Reset(req.Body, c)
+			//			defer pool.Put(r)
+			//			req.Body = r
+			// The question is, how to adapt this to fasthttp?
+			// Keep it simple and stupid.
+			if l := int64(len(req.Body())); l > config.limit {
+				c.SetStatusCode(fasthttp.StatusRequestEntityTooLarge)
+				c.SetContentType("application/json")
+				resp, _ := json.Marshal(ErrStatusRequestEntityTooLarge.Message)
+				c.SetBody(resp)
+				return
+			} else {
+				next(c)
+				return
+			}
 		}
 	}
 }

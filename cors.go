@@ -1,6 +1,7 @@
 package fasthttpmw
 
 import (
+	"fmt"
 	"github.com/valyala/fasthttp"
 	"strconv"
 	"strings"
@@ -86,8 +87,8 @@ func CORSWithConfig(config CORSConfig) MW {
 				return
 			}
 
-			req := c.Request
-			res := c.Response
+			req := &c.Request
+			res := &c.Response
 			origin := req.Header.Peek(HeaderOrigin)
 			allowOrigin := ""
 
@@ -109,7 +110,9 @@ func CORSWithConfig(config CORSConfig) MW {
 				if exposeHeaders != "" {
 					res.Header.Set(HeaderAccessControlExposeHeaders, exposeHeaders)
 				}
+				fmt.Println("RespHeaders:", c.Response.Header.String())
 				next(c)
+				fmt.Println("RespHeaders:", c.Response.Header.String())
 				return
 			}
 

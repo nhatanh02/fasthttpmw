@@ -89,8 +89,8 @@ func SecureWithConfig(config SecureConfig) MW {
 				return
 			}
 
-			req := c.Request
-			res := c.Response
+			req := &c.Request
+			res := &c.Response
 
 			if config.XSSProtection != "" {
 				res.Header.Set(HeaderXXSSProtection, config.XSSProtection)
